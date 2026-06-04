@@ -169,12 +169,6 @@ export default defineConfig({
     emptyOutDir: true,
   },
   server: {
-    proxy: {
-      "/api": {
-        target: process.env.VITE_API_URL ?? "http://127.0.0.1:3000",
-        changeOrigin: true,
-      },
-    },
     host: true,
     allowedHosts: [
       ".manuspre.computer",
