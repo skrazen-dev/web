@@ -3,6 +3,7 @@ import { z } from "zod";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
+import { invokeLLM, type Message } from "./_core/llm";
 import { riskRouter } from "./routers/risk";
 import {
   clearUsdtCalculations,
@@ -210,6 +211,60 @@ const settingsRouter = router({
     .mutation(({ ctx, input }) => upsertSettings(ctx.user.id, input)),
 });
 
+// ─── Grok AI (code generator) Router ────────────────────────────────────────────
+const GROK_SYSTEM_PROMPT = [
+  "You are Grok, the in-house coding copilot for the CE Empire engineering team.",
+  "Generate clean, production-ready code and concise technical answers.",
+  "Default to TypeScript + React (the CE Empire stack) unless another language is requested.",
+  "Always wrap code in fenced blocks with the correct language tag.",
+  "Be direct: lead with the solution, then a short explanation only when it adds value.",
+  "Reply in the same language the user writes in (Thai or English).",
+].join(" ");
+
+const aiRouter = router({
+  // Public so it works behind the client-side operator gate (no OAuth session required).
+  grok: publicProcedure
+    .input(
+      z.object({
+        messages: z
+          .array(
+            z.object({
+              role: z.enum(["system", "user", "assistant"]),
+              content: z.string().min(1),
+            })
+          )
+          .min(1)
+          .max(40),
+        model: z.string().optional(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const history = input.messages.filter((m) => m.role !== "system");
+      const messages: Message[] = [
+        { role: "system", content: GROK_SYSTEM_PROMPT },
+        ...history,
+      ];
+
+      const result = await invokeLLM({
+        model: input.model || process.env.GROK_MODEL || "grok-3",
+        messages,
+        maxTokens: 2048,
+      });
+
+      const content = result.choices?.[0]?.message?.content;
+      const text =
+        typeof content === "string"
+          ? content
+          : Array.isArray(content)
+            ? content
+                .map((part) => ("text" in part ? part.text : ""))
+                .join("")
+            : "";
+
+      return { text };
+    }),
+});
+
 // ─── App Router ───────────────────────────────────────────────────────────────
 export const appRouter = router({
   system: systemRouter,
@@ -228,6 +283,7 @@ export const appRouter = router({
   usdtCalcs: usdtCalcsRouter,
   settings: settingsRouter,
   risk: riskRouter,
+  ai: aiRouter,
 });
 
 export type AppRouter = typeof appRouter;

@@ -20,7 +20,7 @@ interface MobileNavProps {
 }
 
 export function MobileNav({ open, onClose }: MobileNavProps) {
-  const { currentPage, setPage } = useStore();
+  const { currentPage, setPage, setGrokOpen } = useStore();
 
   if (!open) return null;
 
@@ -67,7 +67,10 @@ export function MobileNav({ open, onClose }: MobileNavProps) {
 
         {/* Grok AI Button */}
         <div className="mt-auto pt-4">
-          <button className="w-full flex items-center gap-2.5 px-4 py-3.5 rounded-xl bg-gradient-to-r from-[#00D4FF]/10 to-[#0099CC]/10 border border-[#00D4FF]/20 active:scale-[0.97] transition-transform">
+          <button
+            onClick={() => { setGrokOpen(true); onClose(); }}
+            className="w-full flex items-center gap-2.5 px-4 py-3.5 rounded-xl bg-gradient-to-r from-[#00D4FF]/10 to-[#0099CC]/10 border border-[#00D4FF]/20 active:scale-[0.97] transition-transform"
+          >
             <Sparkles size={16} className="text-[#00D4FF]" />
             <span className="text-sm font-semibold text-[#00D4FF]">Grok AI</span>
           </button>

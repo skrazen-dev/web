@@ -11,6 +11,8 @@ interface AppState {
   setPage: (page: PageId) => void;
   searchQuery: string;
   setSearchQuery: (q: string) => void;
+  grokOpen: boolean;
+  setGrokOpen: (open: boolean) => void;
 
   accounts: BankAccount[];
   addAccount: (account: Omit<BankAccount, 'id' | 'createdAt' | 'updatedAt'>) => void;
@@ -49,6 +51,8 @@ export const useStore = create<AppState>()(
       setPage: (page) => set({ currentPage: page }),
       searchQuery: '',
       setSearchQuery: (q) => set({ searchQuery: q }),
+      grokOpen: false,
+      setGrokOpen: (open) => set({ grokOpen: open }),
 
       accounts: [],
       addAccount: (account) =>

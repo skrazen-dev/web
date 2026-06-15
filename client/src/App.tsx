@@ -7,6 +7,7 @@ import { useStore } from "@/lib/store";
 import { TopBar } from "@/components/layout/TopBar";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { BottomNav } from "@/components/layout/BottomNav";
+import { GrokPanel } from "@/components/GrokPanel";
 import Home from "@/pages/Home";
 import { AUTH_STORAGE_KEY, LoginScreen } from "@/components/auth/LoginScreen";
 import DashboardPage from "@/pages/DashboardPage";
@@ -48,6 +49,7 @@ function AppLayout() {
         </main>
       </div>
       <BottomNav />
+      <GrokPanel />
     </div>
   );
 }

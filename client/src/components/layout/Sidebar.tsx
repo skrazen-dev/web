@@ -17,7 +17,7 @@ const NAV_ITEMS: { id: PageId; label: string; icon: typeof LayoutDashboard }[] =
 ];
 
 export function Sidebar() {
-  const { currentPage, setPage } = useStore();
+  const { currentPage, setPage, setGrokOpen } = useStore();
 
   return (
     <aside className="hidden lg:flex flex-col w-[220px] shrink-0 h-[calc(100vh-72px)] sticky top-[72px] py-4 pr-2">
@@ -45,7 +45,10 @@ export function Sidebar() {
       </nav>
 
       <div className="mt-auto pt-4">
-        <button className="w-full flex items-center gap-2 px-4 py-3 rounded-xl bg-gradient-to-r from-[#00D4FF]/10 to-[#0099CC]/10 border border-[#00D4FF]/20 hover:border-[#00D4FF]/40 transition-all group">
+        <button
+          onClick={() => setGrokOpen(true)}
+          className="w-full flex items-center gap-2 px-4 py-3 rounded-xl bg-gradient-to-r from-[#00D4FF]/10 to-[#0099CC]/10 border border-[#00D4FF]/20 hover:border-[#00D4FF]/40 transition-all group"
+        >
           <Sparkles size={16} className="text-[#00D4FF]" />
           <span className="text-xs font-semibold text-[#00D4FF]">Grok AI</span>
         </button>
