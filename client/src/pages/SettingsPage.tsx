@@ -32,6 +32,8 @@ export default function SettingsPage() {
       addUser({ username, passwordHash, aka: newUser.aka.trim(), tel: newUser.tel.trim() });
       setNewUser(EMPTY_USER);
       toast.success(`สร้างผู้ใช้ ${username} แล้ว`);
+    } catch {
+      toast.error("สร้างผู้ใช้ไม่สำเร็จ กรุณาลองอีกครั้ง");
     } finally {
       setCreating(false);
     }

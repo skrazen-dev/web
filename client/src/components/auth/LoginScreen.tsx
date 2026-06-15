@@ -48,6 +48,8 @@ export function LoginScreen({ onSuccess }: { onSuccess: () => void }) {
       }
       sessionStorage.setItem(AUTH_STORAGE_KEY, "1");
       onSuccess();
+    } catch {
+      setError("เกิดข้อผิดพลาดในการเข้าสู่ระบบ กรุณาลองอีกครั้ง");
     } finally {
       setChecking(false);
     }

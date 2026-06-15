@@ -66,6 +66,9 @@ export function CommandCenterBackground() {
       canvas.height = Math.floor(height * dpr);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       build();
+      // Setting canvas.width clears the bitmap; under reduced motion there is no
+      // loop to repaint, so draw one static frame here.
+      if (prefersReduced) drawFrame();
     };
 
     let t = 0;
@@ -118,7 +121,9 @@ export function CommandCenterBackground() {
     };
 
     let raf = 0;
-    const render = () => {
+    // Paint a single frame (no scheduling) so it can be reused for the static
+    // reduced-motion render and for repainting after a resize.
+    const drawFrame = () => {
       ctx.clearRect(0, 0, width, height);
       t += 1;
 
@@ -160,26 +165,28 @@ export function CommandCenterBackground() {
       });
 
       drawChart();
-      raf = requestAnimationFrame(render);
+    };
+
+    const loop = () => {
+      drawFrame();
+      raf = requestAnimationFrame(loop);
     };
 
     resize();
     window.addEventListener("resize", resize);
 
     const onVisibility = () => {
-      if (document.hidden) {
-        cancelAnimationFrame(raf);
-      } else if (!prefersReduced) {
-        raf = requestAnimationFrame(render);
+      cancelAnimationFrame(raf);
+      if (!document.hidden && !prefersReduced) {
+        raf = requestAnimationFrame(loop);
       }
     };
     document.addEventListener("visibilitychange", onVisibility);
 
     if (prefersReduced) {
-      render();
-      cancelAnimationFrame(raf);
+      drawFrame();
     } else {
-      raf = requestAnimationFrame(render);
+      raf = requestAnimationFrame(loop);
     }
 
     return () => {
