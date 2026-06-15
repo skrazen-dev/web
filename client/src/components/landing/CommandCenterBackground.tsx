@@ -66,9 +66,24 @@ export function CommandCenterBackground() {
       canvas.height = Math.floor(height * dpr);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       build();
+      buildChartGradient();
+      // Setting canvas.width clears the bitmap; under reduced motion there is no
+      // loop to repaint, so draw one static frame here.
+      if (prefersReduced) drawFrame();
     };
 
     let t = 0;
+
+    // The chart stroke gradient only depends on width, so build it once per
+    // resize instead of allocating a new gradient on every animation frame.
+    let chartGradient: CanvasGradient | null = null;
+    const buildChartGradient = () => {
+      const grad = ctx.createLinearGradient(0, 0, width, 0);
+      grad.addColorStop(0, "rgba(212,175,55,0)");
+      grad.addColorStop(0.5, "rgba(212,175,55,0.12)");
+      grad.addColorStop(1, "rgba(212,175,55,0)");
+      chartGradient = grad;
+    };
 
     // Dotted globe in the lower-centre (orthographic projection).
     const drawGlobe = () => {
@@ -108,17 +123,15 @@ export function CommandCenterBackground() {
         if (x === 0) ctx.moveTo(x, y);
         else ctx.lineTo(x, y);
       }
-      const grad = ctx.createLinearGradient(0, 0, width, 0);
-      grad.addColorStop(0, "rgba(212,175,55,0)");
-      grad.addColorStop(0.5, "rgba(212,175,55,0.12)");
-      grad.addColorStop(1, "rgba(212,175,55,0)");
-      ctx.strokeStyle = grad;
+      ctx.strokeStyle = chartGradient ?? "rgba(212,175,55,0.12)";
       ctx.lineWidth = 1.2;
       ctx.stroke();
     };
 
     let raf = 0;
-    const render = () => {
+    // Paint a single frame (no scheduling) so it can be reused for the static
+    // reduced-motion render and for repainting after a resize.
+    const drawFrame = () => {
       ctx.clearRect(0, 0, width, height);
       t += 1;
 
@@ -160,26 +173,28 @@ export function CommandCenterBackground() {
       });
 
       drawChart();
-      raf = requestAnimationFrame(render);
+    };
+
+    const loop = () => {
+      drawFrame();
+      raf = requestAnimationFrame(loop);
     };
 
     resize();
     window.addEventListener("resize", resize);
 
     const onVisibility = () => {
-      if (document.hidden) {
-        cancelAnimationFrame(raf);
-      } else if (!prefersReduced) {
-        raf = requestAnimationFrame(render);
+      cancelAnimationFrame(raf);
+      if (!document.hidden && !prefersReduced) {
+        raf = requestAnimationFrame(loop);
       }
     };
     document.addEventListener("visibilitychange", onVisibility);
 
     if (prefersReduced) {
-      render();
-      cancelAnimationFrame(raf);
+      drawFrame();
     } else {
-      raf = requestAnimationFrame(render);
+      raf = requestAnimationFrame(loop);
     }
 
     return () => {

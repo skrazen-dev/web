@@ -50,7 +50,10 @@ export function GrokPanel() {
   const handleSend = (content: string) => {
     const next: Message[] = [...messages, { role: "user", content }];
     setMessages(next);
-    grok.mutate({ messages: next });
+    // Keep the full history on screen but only send a recent window to the
+    // server (its input is capped at 40), so long conversations never start
+    // failing with a 400.
+    grok.mutate({ messages: next.slice(-30) });
   };
 
   return (
