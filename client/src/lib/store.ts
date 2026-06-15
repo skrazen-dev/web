@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { BankAccount, Expense, Agent, PageId, UsdtCalc, AppSettings } from './types';
+import type { BankAccount, Expense, Agent, PageId, UsdtCalc, AppSettings, AppUser } from './types';
 
 function uid(): string {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
@@ -31,6 +31,11 @@ interface AppState {
   addUsdtCalc: (calc: Omit<UsdtCalc, 'id' | 'createdAt'>) => void;
   deleteUsdtCalc: (id: string) => void;
   clearUsdtCalcs: () => void;
+
+  // Users (created from Settings → สร้างผู้ใช้งาน)
+  users: AppUser[];
+  addUser: (user: Omit<AppUser, 'id' | 'createdAt'>) => void;
+  deleteUser: (id: string) => void;
 
   // Settings
   settings: AppSettings;
@@ -87,6 +92,18 @@ export const useStore = create<AppState>()(
         set((state) => ({ usdtCalcs: state.usdtCalcs.filter((c) => c.id !== id) })),
       clearUsdtCalcs: () => set({ usdtCalcs: [] }),
 
+      // Users
+      users: [],
+      addUser: (user) =>
+        set((state) => ({
+          users: [
+            ...state.users,
+            { ...user, id: uid(), createdAt: new Date().toISOString() },
+          ],
+        })),
+      deleteUser: (id) =>
+        set((state) => ({ users: state.users.filter((u) => u.id !== id) })),
+
       // Settings
       settings: {
         soundEnabled: true,
@@ -107,6 +124,7 @@ export const useStore = create<AppState>()(
         expenses: state.expenses,
         agents: state.agents,
         usdtCalcs: state.usdtCalcs,
+        users: state.users,
         settings: state.settings,
       }),
     }

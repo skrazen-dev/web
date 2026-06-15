@@ -1,30 +1,27 @@
 import { useState } from "react";
 import { ArrowRight, Crown, Loader2, Lock, ShieldAlert, User } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { sha256Hex } from "@/lib/password";
+import { useStore } from "@/lib/store";
 
 /**
- * Single-operator access gate for CE Empire.
+ * Operator access gate for CE Empire.
  *
- * Only the "BOSS" account may enter. The password is never stored in source:
- * we keep a SHA-256 digest and compare hashes at runtime. Note this is a
- * client-side gate (suitable for an internal, trusted-device tool) — it is not
- * a substitute for server-side authentication for anything internet-facing.
+ * The built-in "BOSS" admin may always enter; additional operators created in
+ * Settings → สร้างผู้ใช้งาน can also sign in. Passwords are never stored in
+ * source or state as plaintext — we keep SHA-256 digests and compare hashes.
+ * Note this is a client-side gate (suitable for an internal, trusted-device
+ * tool); it is not a substitute for server-side auth for anything
+ * internet-facing.
  */
-const ALLOWED_USER = "BOSS";
-const PASSWORD_SHA256 =
+const ADMIN_USER = "BOSS";
+const ADMIN_PASSWORD_SHA256 =
   "c7356f6e41312ae224620c0782081e501fd078e2b70e72140a28ad2b6dd137fa";
 
 export const AUTH_STORAGE_KEY = "ce-empire-auth";
 
-async function sha256Hex(input: string): Promise<string> {
-  const data = new TextEncoder().encode(input);
-  const digest = await crypto.subtle.digest("SHA-256", data);
-  return Array.from(new Uint8Array(digest))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
-}
-
 export function LoginScreen({ onSuccess }: { onSuccess: () => void }) {
+  const users = useStore((s) => s.users);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -36,11 +33,15 @@ export function LoginScreen({ onSuccess }: { onSuccess: () => void }) {
     setError("");
     setChecking(true);
     try {
+      const name = username.trim();
       const hashed = await sha256Hex(password);
-      const ok = username.trim() === ALLOWED_USER && hashed === PASSWORD_SHA256;
+      const isAdmin = name === ADMIN_USER && hashed === ADMIN_PASSWORD_SHA256;
+      const matchesUser = users.some(
+        (u) => u.username === name && u.passwordHash === hashed
+      );
       // Constant-ish delay to avoid trivial timing differences.
       await new Promise((r) => setTimeout(r, 350));
-      if (!ok) {
+      if (!isAdmin && !matchesUser) {
         setError("ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง");
         setPassword("");
         return;

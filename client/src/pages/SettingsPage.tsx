@@ -1,15 +1,41 @@
 import { useState } from 'react';
-import { Settings, Bell, MessageSquare, Volume2, Save } from 'lucide-react';
+import { Settings, Bell, MessageSquare, Volume2, Save, UserPlus, Trash2, ShieldCheck } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useStore } from '@/lib/store';
+import { sha256Hex } from '@/lib/password';
 import { toast } from 'sonner';
 
+const EMPTY_USER = { user: '', pass: '', aka: '', tel: '' };
+
 export default function SettingsPage() {
-  const { settings, updateSettings } = useStore();
+  const { settings, updateSettings, users, addUser, deleteUser } = useStore();
   const [localSettings, setLocalSettings] = useState(settings);
   const [testingTelegram, setTestingTelegram] = useState(false);
+  const [newUser, setNewUser] = useState(EMPTY_USER);
+  const [creating, setCreating] = useState(false);
+
+  const handleCreateUser = async () => {
+    const username = newUser.user.trim();
+    if (!username || !newUser.pass) {
+      toast.error('กรอกชื่อผู้ใช้และรหัสผ่านให้ครบ');
+      return;
+    }
+    if (username.toUpperCase() === 'BOSS' || users.some((u) => u.username === username)) {
+      toast.error('ชื่อผู้ใช้นี้มีอยู่แล้ว');
+      return;
+    }
+    setCreating(true);
+    try {
+      const passwordHash = await sha256Hex(newUser.pass);
+      addUser({ username, passwordHash, aka: newUser.aka.trim(), tel: newUser.tel.trim() });
+      setNewUser(EMPTY_USER);
+      toast.success(`สร้างผู้ใช้ ${username} แล้ว`);
+    } finally {
+      setCreating(false);
+    }
+  };
 
   const handleSave = () => {
     updateSettings(localSettings);
@@ -174,6 +200,115 @@ export default function SettingsPage() {
           >
             {testingTelegram ? 'กำลังทดสอบ...' : 'ทดสอบการเชื่อมต่อ'}
           </Button>
+        </CardContent>
+      </Card>
+
+      {/* Create User */}
+      <Card className="bg-[#1A1F26] border-[rgba(255,255,255,0.06)]">
+        <CardContent className="p-4 space-y-3">
+          <div className="flex items-center gap-3 mb-1">
+            <UserPlus size={18} className="text-[#00D4FF]" />
+            <div>
+              <p className="text-sm font-semibold text-white">สร้างผู้ใช้งาน</p>
+              <p className="text-xs text-[#A0A0A0]">เพิ่มผู้ใช้ที่สามารถเข้าสู่ระบบได้</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="text-[10px] font-semibold text-[#A0A0A0] uppercase tracking-wider mb-1.5 block">
+                user
+              </label>
+              <Input
+                type="text"
+                autoCapitalize="none"
+                placeholder="ชื่อผู้ใช้"
+                value={newUser.user}
+                onChange={(e) => setNewUser({ ...newUser, user: e.target.value })}
+                className="bg-[#242B33] border-[rgba(255,255,255,0.08)] text-white text-xs placeholder:text-[#A0A0A0]/30 focus:ring-2 focus:ring-[#00D4FF]/30"
+              />
+            </div>
+            <div>
+              <label className="text-[10px] font-semibold text-[#A0A0A0] uppercase tracking-wider mb-1.5 block">
+                pass
+              </label>
+              <Input
+                type="password"
+                placeholder="รหัสผ่าน"
+                value={newUser.pass}
+                onChange={(e) => setNewUser({ ...newUser, pass: e.target.value })}
+                className="bg-[#242B33] border-[rgba(255,255,255,0.08)] text-white text-xs placeholder:text-[#A0A0A0]/30 focus:ring-2 focus:ring-[#00D4FF]/30"
+              />
+            </div>
+            <div>
+              <label className="text-[10px] font-semibold text-[#A0A0A0] uppercase tracking-wider mb-1.5 block">
+                aka
+              </label>
+              <Input
+                type="text"
+                placeholder="ชื่อเล่น"
+                value={newUser.aka}
+                onChange={(e) => setNewUser({ ...newUser, aka: e.target.value })}
+                className="bg-[#242B33] border-[rgba(255,255,255,0.08)] text-white text-xs placeholder:text-[#A0A0A0]/30 focus:ring-2 focus:ring-[#00D4FF]/30"
+              />
+            </div>
+            <div>
+              <label className="text-[10px] font-semibold text-[#A0A0A0] uppercase tracking-wider mb-1.5 block">
+                tel
+              </label>
+              <Input
+                type="tel"
+                placeholder="เบอร์โทร"
+                value={newUser.tel}
+                onChange={(e) => setNewUser({ ...newUser, tel: e.target.value })}
+                className="bg-[#242B33] border-[rgba(255,255,255,0.08)] text-white text-xs placeholder:text-[#A0A0A0]/30 focus:ring-2 focus:ring-[#00D4FF]/30"
+              />
+            </div>
+          </div>
+
+          <Button
+            onClick={handleCreateUser}
+            disabled={creating}
+            className="w-full bg-[#00D4FF]/20 border border-[#00D4FF]/30 hover:bg-[#00D4FF]/30 text-[#00D4FF] text-xs h-9 transition-colors"
+          >
+            <UserPlus size={14} className="mr-1.5" />
+            {creating ? 'กำลังสร้าง...' : 'สร้างผู้ใช้งาน'}
+          </Button>
+
+          {/* Existing users */}
+          <div className="space-y-2 pt-1">
+            <div className="flex items-center gap-2 rounded-lg bg-[#242B33]/60 px-3 py-2">
+              <ShieldCheck size={15} className="text-[#FFD700]" />
+              <span className="text-xs font-semibold text-white">BOSS</span>
+              <span className="text-[10px] text-[#A0A0A0]">ผู้ดูแลระบบ</span>
+              <span className="ml-auto text-[10px] text-[#FFD700]">แอดมิน</span>
+            </div>
+            {users.map((u) => (
+              <div
+                key={u.id}
+                className="flex items-center gap-2 rounded-lg bg-[#242B33]/40 px-3 py-2"
+              >
+                <span className="text-xs font-semibold text-white">{u.username}</span>
+                {u.aka && <span className="text-[10px] text-[#A0A0A0]">({u.aka})</span>}
+                {u.tel && <span className="text-[10px] text-[#A0A0A0]">· {u.tel}</span>}
+                <button
+                  onClick={() => {
+                    deleteUser(u.id);
+                    toast.success(`ลบผู้ใช้ ${u.username} แล้ว`);
+                  }}
+                  className="ml-auto text-[#EF4444]/70 hover:text-[#EF4444] transition-colors"
+                  aria-label={`ลบ ${u.username}`}
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            ))}
+            {users.length === 0 && (
+              <p className="text-[10px] text-[#A0A0A0]/60 text-center py-1">
+                ยังไม่มีผู้ใช้เพิ่มเติม
+              </p>
+            )}
+          </div>
         </CardContent>
       </Card>
 

@@ -55,6 +55,16 @@ export interface UsdtCalc {
   createdAt: string;
 }
 
+export interface AppUser {
+  id: string;
+  username: string;
+  /** SHA-256 hex digest of the password — never store plaintext. */
+  passwordHash: string;
+  aka: string;
+  tel: string;
+  createdAt: string;
+}
+
 export interface AppSettings {
   soundEnabled: boolean;
   telegramBotToken: string;
