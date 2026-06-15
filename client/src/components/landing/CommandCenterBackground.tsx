@@ -4,7 +4,8 @@ import { useEffect, useRef } from "react";
  * Cinematic command-center backdrop rendered on a single canvas:
  *   • drifting financial "particles" (faint gold/chrome motes)
  *   • flowing vertical data streams (ticker-like light trails)
- *   • a slow, subtle profit curve breathing across the lower third
+ *   • a slow dotted globe breathing in the lower-centre
+ *   • a subtle profit curve motion behind the hero
  *
  * Deliberately restrained — no neon, no glow spam. Pauses when the tab is
  * hidden and honours prefers-reduced-motion.
@@ -36,24 +37,24 @@ export function CommandCenterBackground() {
 
     const build = () => {
       const area = width * height;
-      const pCount = Math.min(90, Math.max(36, Math.round(area / 24000)));
+      const pCount = Math.min(110, Math.max(40, Math.round(area / 20000)));
       particles = Array.from({ length: pCount }, () => ({
         x: rand(0, width),
         y: rand(0, height),
-        r: rand(0.4, 1.8),
-        vy: rand(-0.12, -0.45),
+        r: rand(0.4, 1.9),
+        vy: rand(-0.12, -0.5),
         vx: rand(-0.12, 0.12),
-        a: rand(0.08, 0.4),
-        gold: Math.random() < 0.45,
+        a: rand(0.08, 0.45),
+        gold: Math.random() < 0.5,
       }));
 
-      const sCount = Math.min(26, Math.max(10, Math.round(width / 70)));
+      const sCount = Math.min(30, Math.max(12, Math.round(width / 64)));
       streams = Array.from({ length: sCount }, () => ({
         x: rand(0, width),
         y: rand(0, height),
-        len: rand(60, 180),
-        speed: rand(0.6, 2.2),
-        a: rand(0.04, 0.16),
+        len: rand(70, 200),
+        speed: rand(0.6, 2.4),
+        a: rand(0.04, 0.18),
       }));
     };
 
@@ -68,25 +69,51 @@ export function CommandCenterBackground() {
     };
 
     let t = 0;
+
+    // Dotted globe in the lower-centre (orthographic projection).
+    const drawGlobe = () => {
+      const cx = width * 0.5;
+      const cy = height * 0.62;
+      const radius = Math.min(width, height) * 0.34;
+      const rot = t * 0.0016;
+      const latStep = Math.PI / 22;
+      const lonStep = Math.PI / 22;
+      for (let lat = -Math.PI / 2; lat <= Math.PI / 2; lat += latStep) {
+        const ny = Math.sin(lat);
+        const ringR = Math.cos(lat);
+        for (let lon = 0; lon < Math.PI * 2; lon += lonStep) {
+          const nx = ringR * Math.cos(lon + rot);
+          const nz = ringR * Math.sin(lon + rot);
+          if (nz < 0) continue; // back hemisphere
+          const x = cx + nx * radius;
+          const y = cy - ny * radius;
+          const depth = 0.35 + nz * 0.65;
+          ctx.beginPath();
+          ctx.arc(x, y, 0.9 * depth, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(168,176,190,${0.1 * depth})`;
+          ctx.fill();
+        }
+      }
+    };
+
     const drawChart = () => {
-      // Slow-breathing profit curve along the lower third.
-      const baseY = height * 0.72;
-      const amp = height * 0.06;
+      const baseY = height * 0.5;
+      const amp = height * 0.05;
       ctx.beginPath();
       for (let x = 0; x <= width; x += 8) {
         const n =
           Math.sin(x * 0.006 + t * 0.012) * 0.6 +
           Math.sin(x * 0.013 + t * 0.02) * 0.4;
-        const y = baseY - n * amp - (x / width) * height * 0.06;
+        const y = baseY - n * amp - (x / width) * height * 0.05;
         if (x === 0) ctx.moveTo(x, y);
         else ctx.lineTo(x, y);
       }
       const grad = ctx.createLinearGradient(0, 0, width, 0);
       grad.addColorStop(0, "rgba(212,175,55,0)");
-      grad.addColorStop(0.5, "rgba(212,175,55,0.22)");
+      grad.addColorStop(0.5, "rgba(212,175,55,0.12)");
       grad.addColorStop(1, "rgba(212,175,55,0)");
       ctx.strokeStyle = grad;
-      ctx.lineWidth = 1.4;
+      ctx.lineWidth = 1.2;
       ctx.stroke();
     };
 
@@ -95,11 +122,12 @@ export function CommandCenterBackground() {
       ctx.clearRect(0, 0, width, height);
       t += 1;
 
-      // Data streams (vertical light trails)
+      drawGlobe();
+
       streams.forEach((s) => {
         const g = ctx.createLinearGradient(s.x, s.y, s.x, s.y + s.len);
         g.addColorStop(0, `rgba(180,188,200,0)`);
-        g.addColorStop(0.5, `rgba(200,205,214,${s.a})`);
+        g.addColorStop(0.5, `rgba(205,210,219,${s.a})`);
         g.addColorStop(1, `rgba(212,175,55,0)`);
         ctx.strokeStyle = g;
         ctx.lineWidth = 1;
@@ -114,13 +142,12 @@ export function CommandCenterBackground() {
         }
       });
 
-      // Particles
       particles.forEach((p) => {
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
         ctx.fillStyle = p.gold
-          ? `rgba(212,175,55,${p.a})`
-          : `rgba(200,205,214,${p.a})`;
+          ? `rgba(225,190,90,${p.a})`
+          : `rgba(205,210,219,${p.a})`;
         ctx.fill();
         p.x += p.vx;
         p.y += p.vy;
@@ -149,7 +176,6 @@ export function CommandCenterBackground() {
     document.addEventListener("visibilitychange", onVisibility);
 
     if (prefersReduced) {
-      // Draw a single static frame.
       render();
       cancelAnimationFrame(raf);
     } else {

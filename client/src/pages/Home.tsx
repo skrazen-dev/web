@@ -156,7 +156,7 @@ function ProfitChart() {
       <svg
         viewBox={`0 0 ${W} ${H}`}
         preserveAspectRatio="none"
-        className="mt-9 h-32 w-full"
+        className="mt-9 h-36 w-full"
       >
         <defs>
           <linearGradient id="ce-profit-line" x1="0" y1="0" x2="1" y2="0">
@@ -165,21 +165,34 @@ function ProfitChart() {
             <stop offset="100%" stopColor="#f5d272" />
           </linearGradient>
           <linearGradient id="ce-profit-fill" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="rgba(212,175,55,0.28)" />
+            <stop offset="0%" stopColor="rgba(212,175,55,0.30)" />
             <stop offset="100%" stopColor="rgba(212,175,55,0)" />
           </linearGradient>
         </defs>
+        {/* faint vertical gridlines (ticker columns) */}
+        {coords.map((c, i) => (
+          <line
+            key={i}
+            x1={c.x}
+            y1={c.y}
+            x2={c.x}
+            y2={H}
+            stroke="rgba(212,175,55,0.10)"
+            strokeWidth="0.25"
+            vectorEffect="non-scaling-stroke"
+          />
+        ))}
         <path d={area} fill="url(#ce-profit-fill)" />
         <path
           d={line}
           fill="none"
           stroke="url(#ce-profit-line)"
-          strokeWidth="0.9"
+          strokeWidth="1"
           strokeLinecap="round"
           strokeLinejoin="round"
           vectorEffect="non-scaling-stroke"
         />
-        <circle cx={last.x} cy={last.y} r="1.2" fill="#f5d272" />
+        <circle cx={last.x} cy={last.y} r="1.3" fill="#f5d272" />
       </svg>
     </div>
   );
@@ -273,6 +286,10 @@ export default function Home({ onEnter }: { onEnter?: () => void }) {
   return (
     <div className="ce-empire relative min-h-screen overflow-hidden font-sans">
       <CommandCenterBackground />
+      {/* flowing gold light ribbons (right side) */}
+      <div className="pointer-events-none absolute -right-32 top-1/3 h-[60vh] w-[60vw] -rotate-12 rounded-[50%] bg-[radial-gradient(closest-side,rgba(212,175,55,0.12),transparent_70%)] blur-2xl" />
+      <div className="pointer-events-none absolute right-0 top-1/2 h-px w-2/3 origin-right -rotate-6 bg-gradient-to-l from-[#d4af37]/40 via-[#d4af37]/10 to-transparent" />
+      <div className="pointer-events-none absolute right-0 top-[58%] h-px w-1/2 origin-right -rotate-3 bg-gradient-to-l from-[#f5d272]/30 to-transparent" />
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_90%_at_50%_-5%,transparent_38%,rgba(0,0,0,0.62)_100%)]" />
 
       <div className="relative z-10 mx-auto flex min-h-screen max-w-[1320px] flex-col px-4 py-4 sm:px-6">
@@ -355,12 +372,14 @@ export default function Home({ onEnter }: { onEnter?: () => void }) {
           </div>
 
           {/* Center column — hero */}
-          <div className="flex flex-col items-center lg:col-span-6">
-            <Crown className="ce-anim-crown size-12 ce-gold-text drop-shadow-[0_6px_18px_rgba(212,175,55,0.45)] sm:size-14" />
-            <h1 className="ce-anim-logo mt-2 select-none text-7xl font-black leading-none tracking-tight sm:text-8xl">
+          <div className="relative flex flex-col items-center lg:col-span-6">
+            {/* golden glow behind the wordmark */}
+            <div className="pointer-events-none absolute left-1/2 top-0 -z-10 h-80 w-[34rem] max-w-full -translate-x-1/2 rounded-full bg-[radial-gradient(closest-side,rgba(212,175,55,0.20),rgba(212,175,55,0.06)_45%,transparent_72%)] blur-[2px]" />
+            <Crown className="ce-anim-crown size-14 ce-gold-text drop-shadow-[0_8px_24px_rgba(212,175,55,0.6)] sm:size-16" />
+            <h1 className="ce-anim-logo -mt-1 select-none text-[7rem] font-black leading-[0.85] tracking-tight sm:text-[10rem]">
               <span className="ce-chrome-text">CE</span>
             </h1>
-            <div className="ce-anim-logo mt-1 text-2xl font-light tracking-[0.5em] ce-gold-text sm:text-3xl">
+            <div className="ce-anim-logo -mt-2 text-3xl font-light tracking-[0.5em] ce-gold-text sm:text-4xl">
               EMPIRE
             </div>
             <div className="ce-rise-2 mt-5 flex w-48 items-center justify-center">
@@ -393,10 +412,15 @@ export default function Home({ onEnter }: { onEnter?: () => void }) {
               <ArrowRight className="size-5 text-[#d4af37] transition-transform group-hover:translate-x-1" />
             </button>
 
-            {/* podium */}
-            <div className="ce-rise-5 relative mt-5 h-12 w-full max-w-md">
-              <div className="absolute left-1/2 top-0 h-9 w-64 -translate-x-1/2 rounded-[50%] border border-[#d4af37]/25 bg-[radial-gradient(closest-side,rgba(212,175,55,0.10),transparent)]" />
-              <div className="absolute left-1/2 top-3 h-7 w-44 -translate-x-1/2 rounded-[50%] bg-black/50 blur-[2px]" />
+            {/* marble podium */}
+            <div className="ce-rise-5 relative mt-6 h-24 w-full max-w-md">
+              {/* cylinder body */}
+              <div className="absolute left-1/2 top-3 h-14 w-72 -translate-x-1/2 rounded-[50%/22%] bg-[linear-gradient(180deg,#26282e_0%,#15161a_55%,#0c0c0f_100%)]" />
+              {/* top face (marble) with gold rim */}
+              <div className="absolute left-1/2 top-1 h-9 w-72 -translate-x-1/2 rounded-[50%] border border-[#d4af37]/45 bg-[radial-gradient(closest-side,#2c2e34,#17181c)] shadow-[0_0_24px_-6px_rgba(212,175,55,0.45)]" />
+              <div className="absolute left-1/2 top-[0.85rem] h-6 w-56 -translate-x-1/2 rounded-[50%] border border-white/5 bg-[radial-gradient(closest-side,rgba(212,175,55,0.10),transparent)]" />
+              {/* reflection / floor glow */}
+              <div className="absolute left-1/2 top-16 h-7 w-80 -translate-x-1/2 rounded-[50%] bg-[radial-gradient(closest-side,rgba(212,175,55,0.10),transparent)] blur-[3px]" />
             </div>
           </div>
 
