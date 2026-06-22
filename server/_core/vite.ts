@@ -48,20 +48,31 @@ export async function setupVite(app: Express, server: Server) {
 }
 
 export function serveStatic(app: Express) {
-  const distPath =
+  // In Vercel experimentalServices the server may run from the TypeScript source
+  // (server/_core/), so import.meta.dirname != dist/. Fall back to process.cwd().
+  const candidates =
     process.env.NODE_ENV === "development"
-      ? path.resolve(import.meta.dirname, "../..", "dist", "public")
-      : path.resolve(import.meta.dirname, "public");
+      ? [path.resolve(import.meta.dirname, "../..", "dist", "public")]
+      : [
+          path.resolve(import.meta.dirname, "public"),          // esbuild: dist/index.js → dist/public
+          path.resolve(process.cwd(), "dist", "public"),        // Vercel: project root → dist/public
+          path.resolve(import.meta.dirname, "../..", "dist", "public"), // source: server/_core → dist/public
+        ];
+
+  const distPath = candidates.find(p => fs.existsSync(p)) ?? candidates[0];
+
   if (!fs.existsSync(distPath)) {
     console.error(
-      `Could not find the build directory: ${distPath}, make sure to build the client first`
+      `[Static] Could not find build directory. Tried:\n${candidates.join("\n")}`
     );
   }
 
   app.use(express.static(distPath));
 
   // fall through to index.html if the file doesn't exist
-  app.use("*", (_req, res) => {
-    res.sendFile(path.resolve(distPath, "index.html"));
+  app.use("*", (_req, res, next) => {
+    res.sendFile(path.resolve(distPath, "index.html"), err => {
+      if (err) next(err);
+    });
   });
 }

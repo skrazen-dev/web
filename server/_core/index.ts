@@ -1,5 +1,5 @@
 import "dotenv/config";
-import express from "express";
+import express, { type NextFunction, type Request, type Response } from "express";
 import { createServer } from "http";
 import net from "net";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
@@ -50,6 +50,14 @@ async function startServer() {
   } else {
     serveStatic(app);
   }
+
+  // Global error handler — must be last and have 4 params
+  app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
+    console.error("[Server Error]", err.message ?? err);
+    if (!res.headersSent) {
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
 
   const preferredPort = parseInt(process.env.PORT || "3000");
   const port = await findAvailablePort(preferredPort);
