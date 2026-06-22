@@ -1,13 +1,20 @@
-import { Search, Bell, Menu } from 'lucide-react';
+import { Search, Bell, Menu, LogOut } from 'lucide-react';
 import { useStore } from '@/lib/store';
 import { useState } from 'react';
+import { toast } from 'sonner';
 import { MobileNav } from './MobileNav';
 
 const LOGO_URL = 'https://d2xsxph8kpxj0f.cloudfront.net/310519663690140697/LEwiJDTkxh7Zpu9QQSN3Ab/ce-empire-favicon-huVwYnigudxF9CKVaHQtCS.webp';
 
 export function TopBar() {
   const { searchQuery, setSearchQuery } = useStore();
+  const logout = useStore((s) => s.logout);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+
+  const handleLogout = () => {
+    logout();
+    toast.success('ออกจากระบบแล้ว');
+  };
 
   return (
     <>
@@ -62,6 +69,14 @@ export function TopBar() {
             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#00D4FF] to-[#0099CC] flex items-center justify-center text-[#0F1419] text-xs font-bold">
               A
             </div>
+            <button
+              onClick={handleLogout}
+              className="p-2 rounded-xl hover:bg-[#1E2730] text-[#A0A0A0] hover:text-white transition-colors"
+              aria-label="ออกจากระบบ"
+              title="ออกจากระบบ"
+            >
+              <LogOut size={18} />
+            </button>
           </div>
         </div>
       </header>
