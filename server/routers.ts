@@ -4,6 +4,7 @@ import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import { invokeLLM, type Message } from "./_core/llm";
+import { invokeGrokChat, isXaiConfigured } from "./_core/xaiConnect";
 import { riskRouter } from "./routers/risk";
 import {
   clearUsdtCalculations,
@@ -245,6 +246,17 @@ const aiRouter = router({
         ...history,
       ];
 
+      // Prefer the real Grok (x.ai) via Vercel Connect when configured;
+      // otherwise fall back to the built-in forge LLM.
+      if (isXaiConfigured()) {
+        const text = await invokeGrokChat({
+          messages,
+          model: input.model,
+          maxTokens: 2048,
+        });
+        return { text, provider: "xai" as const };
+      }
+
       const result = await invokeLLM({
         model: input.model || process.env.GROK_MODEL || "grok-3",
         messages,
@@ -261,7 +273,7 @@ const aiRouter = router({
                 .join("")
             : "";
 
-      return { text };
+      return { text, provider: "forge" as const };
     }),
 });
 
