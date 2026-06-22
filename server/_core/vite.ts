@@ -1,12 +1,14 @@
 import express, { type Express } from "express";
 import fs from "fs";
 import { type Server } from "http";
-import { nanoid } from "nanoid";
 import path from "path";
-import { createServer as createViteServer } from "vite";
-import viteConfig from "../../vite.config";
 
 export async function setupVite(app: Express, server: Server) {
+  // Dynamic imports so vite (a devDependency) is never resolved in production
+  const { createServer: createViteServer } = await import("vite");
+  const { default: viteConfig } = await import("../../vite.config");
+  const { nanoid } = await import("nanoid");
+
   const serverOptions = {
     middlewareMode: true,
     hmr: { server },
@@ -54,9 +56,9 @@ export function serveStatic(app: Express) {
     process.env.NODE_ENV === "development"
       ? [path.resolve(import.meta.dirname, "../..", "dist", "public")]
       : [
-          path.resolve(import.meta.dirname, "public"),          // esbuild: dist/index.js → dist/public
-          path.resolve(process.cwd(), "dist", "public"),        // Vercel: project root → dist/public
-          path.resolve(import.meta.dirname, "../..", "dist", "public"), // source: server/_core → dist/public
+          path.resolve(import.meta.dirname, "public"),                    // esbuild: dist/index.js → dist/public
+          path.resolve(process.cwd(), "dist", "public"),                  // Vercel: project root → dist/public
+          path.resolve(import.meta.dirname, "../..", "dist", "public"),   // source: server/_core → dist/public
         ];
 
   const distPath = candidates.find(p => fs.existsSync(p)) ?? candidates[0];
