@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -27,28 +27,36 @@ export function GrokPanel() {
   const open = useStore((s) => s.grokOpen);
   const setOpen = useStore((s) => s.setGrokOpen);
   const [messages, setMessages] = useState<Message[]>([]);
+  // Ref mirrors `messages` so handlers always read the latest history rather
+  // than a stale render closure (rapid sends would otherwise drop turns).
+  const messagesRef = useRef<Message[]>([]);
+  const append = (msg: Message) => {
+    setMessages((prev) => {
+      const next = [...prev, msg];
+      messagesRef.current = next;
+      return next;
+    });
+  };
 
   const grok = trpc.ai.grok.useMutation({
     onSuccess: ({ text }) => {
-      setMessages((prev) => [...prev, { role: "assistant", content: text }]);
+      append({ role: "assistant", content: text });
     },
     onError: (error) => {
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "assistant",
-          content:
-            "⚠️ ขออภัย เรียก Grok ไม่สำเร็จ — ตรวจสอบการตั้งค่า API ของระบบ\n\n```\n" +
-            error.message +
-            "\n```",
-        },
-      ]);
+      append({
+        role: "assistant",
+        content:
+          "⚠️ ขออภัย เรียก Grok ไม่สำเร็จ — ตรวจสอบการตั้งค่า API ของระบบ\n\n```\n" +
+          error.message +
+          "\n```",
+      });
       toast.error("เรียก Grok ไม่สำเร็จ");
     },
   });
 
   const handleSend = (content: string) => {
-    const next: Message[] = [...messages, { role: "user", content }];
+    const next: Message[] = [...messagesRef.current, { role: "user", content }];
+    messagesRef.current = next;
     setMessages(next);
     // Keep the full history on screen but only send a recent window to the
     // server (its input is capped at 40), so long conversations never start

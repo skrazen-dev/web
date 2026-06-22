@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState } from "react";
+import { lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import ErrorBoundary from "./components/ErrorBoundary";
@@ -8,7 +8,7 @@ import { TopBar } from "@/components/layout/TopBar";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { BottomNav } from "@/components/layout/BottomNav";
 import Home from "@/pages/Home";
-import { AUTH_STORAGE_KEY, LoginScreen } from "@/components/auth/LoginScreen";
+import { LoginScreen } from "@/components/auth/LoginScreen";
 import DashboardPage from "@/pages/DashboardPage";
 import AccountsPage from "@/pages/AccountsPage";
 import ExpensesPage from "@/pages/ExpensesPage";
@@ -64,17 +64,12 @@ function AppLayout() {
   );
 }
 
-type Stage = "landing" | "login" | "app";
-
 function App() {
   // Flow: command-center landing → single-operator login → dashboard.
-  // A successful login persists for the browser session so reloads skip ahead.
-  const [stage, setStage] = useState<Stage>(() =>
-    typeof window !== "undefined" &&
-    sessionStorage.getItem(AUTH_STORAGE_KEY) === "1"
-      ? "app"
-      : "landing"
-  );
+  // A successful login persists for the browser session so reloads skip ahead;
+  // logout (from the top bar) clears it and returns to the login screen.
+  const stage = useStore((s) => s.authStage);
+  const setStage = useStore((s) => s.setAuthStage);
 
   const renderStage = () => {
     switch (stage) {

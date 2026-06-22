@@ -2,6 +2,9 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { BankAccount, Expense, Agent, PageId, UsdtCalc, AppSettings, AppUser } from './types';
 
+export type AuthStage = 'landing' | 'login' | 'app';
+const AUTH_KEY = 'ce-empire-auth';
+
 function uid(): string {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 }
@@ -13,6 +16,11 @@ interface AppState {
   setSearchQuery: (q: string) => void;
   grokOpen: boolean;
   setGrokOpen: (open: boolean) => void;
+
+  // Auth flow: command-center landing → single-operator login → app.
+  authStage: AuthStage;
+  setAuthStage: (stage: AuthStage) => void;
+  logout: () => void;
 
   accounts: BankAccount[];
   addAccount: (account: Omit<BankAccount, 'id' | 'createdAt' | 'updatedAt'>) => void;
@@ -53,6 +61,16 @@ export const useStore = create<AppState>()(
       setSearchQuery: (q) => set({ searchQuery: q }),
       grokOpen: false,
       setGrokOpen: (open) => set({ grokOpen: open }),
+
+      authStage:
+        typeof window !== 'undefined' && sessionStorage.getItem(AUTH_KEY) === '1'
+          ? 'app'
+          : 'landing',
+      setAuthStage: (stage) => set({ authStage: stage }),
+      logout: () => {
+        if (typeof window !== 'undefined') sessionStorage.removeItem(AUTH_KEY);
+        set({ authStage: 'login', grokOpen: false });
+      },
 
       accounts: [],
       addAccount: (account) =>
