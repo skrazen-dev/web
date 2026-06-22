@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import ErrorBoundary from "./components/ErrorBoundary";
@@ -7,7 +7,6 @@ import { useStore } from "@/lib/store";
 import { TopBar } from "@/components/layout/TopBar";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { BottomNav } from "@/components/layout/BottomNav";
-import { GrokPanel } from "@/components/GrokPanel";
 import Home from "@/pages/Home";
 import { AUTH_STORAGE_KEY, LoginScreen } from "@/components/auth/LoginScreen";
 import DashboardPage from "@/pages/DashboardPage";
@@ -20,6 +19,12 @@ import UsdtCalcPage from "@/pages/UsdtCalcPage";
 import SettingsPage from "@/pages/SettingsPage";
 import BulkCalcPage from "@/pages/BulkCalcPage";
 import RiskAnalysisPage from "@/pages/RiskAnalysisPage";
+
+// The Grok panel pulls in the markdown/syntax-highlighting stack (Streamdown +
+// Shiki), so load it only when the operator actually opens the chat.
+const GrokPanel = lazy(() =>
+  import("@/components/GrokPanel").then((m) => ({ default: m.GrokPanel }))
+);
 
 function PageRenderer() {
   const { currentPage } = useStore();
@@ -39,6 +44,7 @@ function PageRenderer() {
 }
 function AppLayout() {
   // make sure to consider if you need authentication for certain routes
+  const grokOpen = useStore((s) => s.grokOpen);
   return (
     <div className="min-h-screen bg-[#0F1419]">
       <TopBar />
@@ -49,7 +55,11 @@ function AppLayout() {
         </main>
       </div>
       <BottomNav />
-      <GrokPanel />
+      {grokOpen && (
+        <Suspense fallback={null}>
+          <GrokPanel />
+        </Suspense>
+      )}
     </div>
   );
 }

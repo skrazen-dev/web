@@ -167,6 +167,17 @@ export default defineConfig({
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
+    rollupOptions: {
+      output: {
+        // Split large, independently-cacheable vendor libs out of the main
+        // bundle so they load in parallel and stay cached across app updates.
+        manualChunks: {
+          "react-vendor": ["react", "react-dom"],
+          charts: ["recharts"],
+          motion: ["framer-motion"],
+        },
+      },
+    },
   },
   server: {
     host: true,
