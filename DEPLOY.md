@@ -4,7 +4,7 @@
 persistent Node host ได้เลย — ไม่เหมาะกับ serverless (Vercel) เพราะ backend ต้องรันค้าง
 และมี cron (`setInterval`) สำหรับ Daily Summary ที่ต้องการ process ที่อยู่ตลอด
 
-มี `Dockerfile` ให้แล้ว ใช้ได้กับทุก container host
+มี config พร้อมใช้: `Dockerfile` (ทุก host), `railway.json` (Railway), `render.yaml` (Render Blueprint)
 
 ## Required environment variables (runtime)
 
