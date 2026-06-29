@@ -6,6 +6,7 @@ import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import { invokeLLM, type Message } from "./_core/llm";
 import { invokeGrokChat, isXaiConfigured } from "./_core/xaiConnect";
 import { riskRouter } from "./routers/risk";
+import { grokRouter } from "./routers/grok";
 import {
   clearUsdtCalculations,
   createAccount,
@@ -296,6 +297,7 @@ export const appRouter = router({
   settings: settingsRouter,
   risk: riskRouter,
   ai: aiRouter,
+  grok: grokRouter,
 });
 
 export type AppRouter = typeof appRouter;

@@ -1,0 +1,13 @@
+node_modules
+**/node_modules
+dist
+*.dist
+.git
+.github
+_inspect
+_extracted
+references
+*.md
+.env
+.env.*
+npm-debug.log
